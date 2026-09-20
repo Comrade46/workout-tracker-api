@@ -1,7 +1,3 @@
-# ==========================================
-# WORKOUT TRACKER API - BUILD
-# ==========================================
-
 FROM maven:3.9.16-eclipse-temurin-25 AS build
 
 WORKDIR /app
@@ -13,11 +9,6 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 
 RUN mvn clean package -DskipTests
-
-
-# ==========================================
-# WORKOUT TRACKER API - RUNTIME
-# ==========================================
 
 FROM eclipse-temurin:25-jre
 
