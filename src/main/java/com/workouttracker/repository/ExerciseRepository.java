@@ -3,12 +3,27 @@ package com.workouttracker.repository;
 import com.workouttracker.model.Exercise;
 import com.workouttracker.model.WorkoutType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
+
+    /**
+     * Built-in exercises plus the given user's own custom exercises.
+     */
+    @Query("SELECT e FROM Exercise e WHERE e.createdBy IS NULL OR e.createdBy = :userId ORDER BY e.id")
+    List<Exercise> findAllVisible(@Param("userId") Long userId);
+
+    /**
+     * One exercise, only if it is built-in or owned by the given user.
+     */
+    @Query("SELECT e FROM Exercise e WHERE e.id = :id AND (e.createdBy IS NULL OR e.createdBy = :userId)")
+    Optional<Exercise> findVisibleById(@Param("id") Long id, @Param("userId") Long userId);
 
     /**
      * Find all exercises filtered by workout type (GYM, HOME, BOTH).

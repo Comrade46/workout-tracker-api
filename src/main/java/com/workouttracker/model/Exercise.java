@@ -45,6 +45,28 @@ public class Exercise {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    /*
+     * REPS  -> counted in repetitions (Push-Up, Squat, Bench Press)
+     * TIME  -> held / performed for a duration (Plank, Wall Sit, Running)
+     *
+     * Nullable: rows created before this column existed are
+     * classified in ExerciseServiceImpl until they are edited.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tracking_type", length = 20)
+    private ExerciseTrackingType trackingType;
+
+    // Default repetitions per set for REPS exercises
+    @Column(name = "default_reps")
+    private Integer defaultReps;
+
+    /*
+     * ID of the user who created this custom exercise.
+     * Null for built-in exercises shared by everyone.
+     */
+    @Column(name = "created_by")
+    private Long createdBy;
+
     public Exercise() {
     }
 
@@ -81,7 +103,8 @@ public class Exercise {
             isCustom = false;
         }
 
-        if (durationSeconds == null) {
+        if (trackingType == ExerciseTrackingType.TIME
+                && durationSeconds == null) {
             durationSeconds = 30;
         }
 
@@ -228,6 +251,30 @@ public class Exercise {
 
     public void setRestSeconds(Integer restSeconds) {
         this.restSeconds = restSeconds;
+    }
+
+    public ExerciseTrackingType getTrackingType() {
+        return trackingType;
+    }
+
+    public void setTrackingType(ExerciseTrackingType trackingType) {
+        this.trackingType = trackingType;
+    }
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Integer getDefaultReps() {
+        return defaultReps;
+    }
+
+    public void setDefaultReps(Integer defaultReps) {
+        this.defaultReps = defaultReps;
     }
 
     public LocalDateTime getCreatedAt() {

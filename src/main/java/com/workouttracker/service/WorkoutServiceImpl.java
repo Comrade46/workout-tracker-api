@@ -30,9 +30,16 @@ public class WorkoutServiceImpl implements WorkoutService {
             WorkoutSessionRepository workoutSessionRepository,
             ExerciseRepository exerciseRepository) {
 
-        this.workoutSessionRepository = workoutSessionRepository;
-        this.exerciseRepository = exerciseRepository;
+        this.workoutSessionRepository =
+                workoutSessionRepository;
+
+        this.exerciseRepository =
+                exerciseRepository;
     }
+
+    // =========================================================
+    // LOG WORKOUT
+    // =========================================================
 
     @Override
     @Transactional
@@ -40,43 +47,71 @@ public class WorkoutServiceImpl implements WorkoutService {
             WorkoutSessionRequestDTO requestDTO,
             Long userId) {
 
-        // Create the parent WorkoutSession for the authenticated user
-        WorkoutSession session = WorkoutSession.builder()
-                .userId(userId)
-                .workoutDate(requestDTO.getWorkoutDate())
-                .notes(requestDTO.getNotes())
-                .durationMinutes(requestDTO.getDurationMinutes())
-                .build();
+        WorkoutSession session =
+                WorkoutSession.builder()
+                        .userId(userId)
+                        .workoutDate(
+                                requestDTO.getWorkoutDate()
+                        )
+                        .notes(
+                                requestDTO.getNotes()
+                        )
+                        .durationMinutes(
+                                requestDTO.getDurationMinutes()
+                        )
+                        .build();
 
-        // Build and attach each WorkoutSet child
-        for (WorkoutSetRequestDTO setDTO : requestDTO.getSets()) {
+        for (WorkoutSetRequestDTO setDTO :
+                requestDTO.getSets()) {
 
-            Exercise exercise = exerciseRepository
-                    .findById(setDTO.getExerciseId())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException(
-                                    "Exercise not found with ID: "
-                                            + setDTO.getExerciseId()
+            Exercise exercise =
+                    exerciseRepository
+                            .findVisibleById(
+                                    setDTO.getExerciseId(),
+                                    userId
                             )
-                    );
+                            .orElseThrow(
+                                    () ->
+                                            new ResourceNotFoundException(
+                                                    "Exercise not found with ID: "
+                                                            + setDTO.getExerciseId()
+                                            )
+                            );
 
-            WorkoutSet set = WorkoutSet.builder()
-                    .exercise(exercise)
-                    .setNumber(setDTO.getSetNumber())
-                    .weight(setDTO.getWeight())
-                    .reps(setDTO.getReps())
-                    .rpe(setDTO.getRpe())
-                    .build();
+            WorkoutSet set =
+                    WorkoutSet.builder()
+                            .exercise(exercise)
+                            .setNumber(
+                                    setDTO.getSetNumber()
+                            )
+                            .weight(
+                                    setDTO.getWeight()
+                            )
+                            .reps(
+                                    setDTO.getReps()
+                            )
+                            .rpe(
+                                    setDTO.getRpe()
+                            )
+                            .durationSeconds(
+                                    setDTO.getDurationSeconds()
+                            )
+                            .build();
 
             session.addSet(set);
         }
 
-        // Save parent session
         WorkoutSession savedSession =
-                workoutSessionRepository.save(session);
+                workoutSessionRepository.save(
+                        session
+                );
 
         return mapToResponseDTO(savedSession);
     }
+
+    // =========================================================
+    // GET WORKOUT
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -84,23 +119,26 @@ public class WorkoutServiceImpl implements WorkoutService {
             Long id,
             Long userId) {
 
-        /*
-         * Important:
-         * Find the workout only if it belongs to the
-         * currently authenticated user.
-         */
         WorkoutSession session =
                 workoutSessionRepository
-                        .findByIdAndUserId(id, userId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Workout session not found with ID: "
-                                                + id
-                                )
+                        .findByIdAndUserId(
+                                id,
+                                userId
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Workout session not found with ID: "
+                                                        + id
+                                        )
                         );
 
         return mapToResponseDTO(session);
     }
+
+    // =========================================================
+    // GET ALL WORKOUTS
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -108,11 +146,17 @@ public class WorkoutServiceImpl implements WorkoutService {
             Long userId) {
 
         return workoutSessionRepository
-                .findByUserIdOrderByWorkoutDateDesc(userId)
+                .findByUserIdOrderByWorkoutDateDesc(
+                        userId
+                )
                 .stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
+
+    // =========================================================
+    // GET WORKOUTS BY DATE RANGE
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -132,91 +176,168 @@ public class WorkoutServiceImpl implements WorkoutService {
                 .collect(Collectors.toList());
     }
 
+    // =========================================================
+    // DELETE WORKOUT
+    // =========================================================
+
     @Override
     @Transactional
     public void deleteWorkout(
             Long id,
             Long userId) {
 
-        /*
-         * Delete only if the workout belongs to
-         * the authenticated user.
-         */
         WorkoutSession session =
                 workoutSessionRepository
-                        .findByIdAndUserId(id, userId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Workout session not found with ID: "
-                                                + id
-                                )
+                        .findByIdAndUserId(
+                                id,
+                                userId
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Workout session not found with ID: "
+                                                        + id
+                                        )
                         );
 
-        workoutSessionRepository.delete(session);
+        workoutSessionRepository.delete(
+                session
+        );
     }
 
-    // =========================================================================
-    // Helper: Map WorkoutSession Entity to Response DTO
-    // =========================================================================
+    // =========================================================
+    // MAP ENTITY → RESPONSE DTO
+    // =========================================================
 
     private WorkoutSessionResponseDTO mapToResponseDTO(
             WorkoutSession session) {
 
-        BigDecimal totalVolume = BigDecimal.ZERO;
+        BigDecimal totalVolume =
+                BigDecimal.ZERO;
 
         List<WorkoutSetResponseDTO> setDTOs =
                 new ArrayList<>();
 
         if (session.getSets() != null) {
 
-            for (WorkoutSet set : session.getSets()) {
+            for (WorkoutSet set :
+                    session.getSets()) {
+
+                Integer durationSeconds =
+                        set.getDurationSeconds();
+
+                boolean timeBased =
+                        durationSeconds != null
+                                && durationSeconds > 0;
 
                 BigDecimal setVolume =
-                        set.getWeight()
-                                .multiply(
-                                        BigDecimal.valueOf(
-                                                set.getReps()
-                                        )
-                                );
+                        BigDecimal.ZERO;
 
-                totalVolume =
-                        totalVolume.add(setVolume);
+                /*
+                 * TIME SET
+                 *
+                 * Do not calculate:
+                 *
+                 * weight × reps
+                 *
+                 * for a TIME exercise.
+                 */
+                if (!timeBased) {
+
+                    BigDecimal weight =
+                            set.getWeight() != null
+                                    ? set.getWeight()
+                                    : BigDecimal.ZERO;
+
+                    Integer reps =
+                            set.getReps() != null
+                                    ? set.getReps()
+                                    : 0;
+
+                    setVolume =
+                            weight.multiply(
+                                    BigDecimal.valueOf(
+                                            reps
+                                    )
+                            );
+
+                    totalVolume =
+                            totalVolume.add(
+                                    setVolume
+                            );
+                }
 
                 WorkoutSetResponseDTO setDTO =
-                        WorkoutSetResponseDTO.builder()
-                                .id(set.getId())
+                        WorkoutSetResponseDTO
+                                .builder()
+                                .id(
+                                        set.getId()
+                                )
                                 .exerciseId(
-                                        set.getExercise().getId()
+                                        set.getExercise()
+                                                .getId()
                                 )
                                 .exerciseName(
-                                        set.getExercise().getName()
+                                        set.getExercise()
+                                                .getName()
                                 )
                                 .category(
-                                        set.getExercise().getCategory()
+                                        set.getExercise()
+                                                .getCategory()
                                 )
-                                .setNumber(set.getSetNumber())
-                                .weight(set.getWeight())
-                                .reps(set.getReps())
-                                .rpe(set.getRpe())
-                                .volume(setVolume)
+                                .setNumber(
+                                        set.getSetNumber()
+                                )
+                                .weight(
+                                        set.getWeight()
+                                )
+                                .reps(
+                                        set.getReps()
+                                )
+                                .rpe(
+                                        set.getRpe()
+                                )
+                                .durationSeconds(
+                                        durationSeconds
+                                )
+                                .volume(
+                                        setVolume
+                                )
                                 .build();
 
                 setDTOs.add(setDTO);
             }
         }
 
-        return WorkoutSessionResponseDTO.builder()
-                .id(session.getId())
-                .userId(session.getUserId())
-                .workoutDate(session.getWorkoutDate())
-                .notes(session.getNotes())
+        return WorkoutSessionResponseDTO
+                .builder()
+                .id(
+                        session.getId()
+                )
+                .userId(
+                        session.getUserId()
+                )
+                .workoutDate(
+                        session.getWorkoutDate()
+                )
+                .notes(
+                        session.getNotes()
+                )
                 .durationMinutes(
                         session.getDurationMinutes()
                 )
-                .totalVolume(totalVolume)
-                .totalSets(setDTOs.size())
-                .createdAt(session.getCreatedAt())
-                .sets(setDTOs)
+                .totalVolume(
+                        totalVolume
+                )
+                .totalSets(
+                        setDTOs.size()
+                )
+                .createdAt(
+                        session.getCreatedAt()
+                )
+                .sets(
+                        setDTOs
+                )
                 .build();
     }
 }

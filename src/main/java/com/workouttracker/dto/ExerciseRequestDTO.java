@@ -1,5 +1,6 @@
 package com.workouttracker.dto;
 
+import com.workouttracker.model.ExerciseTrackingType;
 import com.workouttracker.model.WorkoutType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -23,8 +24,16 @@ public class ExerciseRequestDTO {
     @Size(max = 50, message = "Equipment name must not exceed 50 characters")
     private String equipment;
 
+    // REPS or TIME. Null is treated as REPS.
+    private ExerciseTrackingType trackingType;
+
+    // Used when trackingType = REPS
+    @Min(value = 1, message = "Reps must be at least 1")
+    private Integer defaultReps;
+
+    // Used when trackingType = TIME
     @Min(value = 1, message = "Exercise duration must be at least 1 second")
-    private Integer durationSeconds = 30;
+    private Integer durationSeconds;
 
     @Min(value = 0, message = "Rest time cannot be negative")
     private Integer restSeconds = 15;
@@ -53,7 +62,13 @@ public class ExerciseRequestDTO {
     public String getEquipment() { return equipment; }
     public void setEquipment(String equipment) { this.equipment = equipment; }
 
-    public Integer getDurationSeconds() { return durationSeconds == null ? 30 : durationSeconds; }
+    public ExerciseTrackingType getTrackingType() { return trackingType; }
+    public void setTrackingType(ExerciseTrackingType trackingType) { this.trackingType = trackingType; }
+
+    public Integer getDefaultReps() { return defaultReps; }
+    public void setDefaultReps(Integer defaultReps) { this.defaultReps = defaultReps; }
+
+    public Integer getDurationSeconds() { return durationSeconds; }
     public void setDurationSeconds(Integer durationSeconds) { this.durationSeconds = durationSeconds; }
 
     public Integer getRestSeconds() { return restSeconds == null ? 15 : restSeconds; }

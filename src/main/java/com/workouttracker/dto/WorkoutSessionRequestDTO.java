@@ -1,8 +1,10 @@
 package com.workouttracker.dto;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -11,8 +13,10 @@ public class WorkoutSessionRequestDTO {
     @NotNull(message = "Workout date is required")
     private LocalDate workoutDate;
 
+    @Size(max = 2000, message = "Notes must not exceed 2000 characters")
     private String notes;
 
+    @Min(value = 0, message = "Duration cannot be negative")
     private Integer durationMinutes;
 
     @NotEmpty(message = "A workout session must contain at least one set")

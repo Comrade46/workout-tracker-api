@@ -19,10 +19,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Fetch user from DB
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        String identifier = usernameOrEmail == null ? "" : usernameOrEmail.trim();
+
+        // Login accepts username or email. Emails are stored lower-case.
+        User user = userRepository.findByUsername(identifier)
+                .or(() -> userRepository.findByEmail(identifier.toLowerCase()))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + identifier));
         
         // Convert to Spring Security UserDetails object
         return UserDetailsImpl.build(user);

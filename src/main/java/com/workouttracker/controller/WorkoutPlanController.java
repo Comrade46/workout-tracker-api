@@ -14,11 +14,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.workouttracker.dto.WorkoutPlanRequestDTO;
 import com.workouttracker.dto.WorkoutPlanResponse;
+import com.workouttracker.exception.ResourceNotFoundException;
 import com.workouttracker.model.User;
 import com.workouttracker.model.WorkoutPlan;
 import com.workouttracker.repository.UserRepository;
 import com.workouttracker.service.WorkoutPlanService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/workout-plans")
@@ -37,18 +41,18 @@ public class WorkoutPlanController {
 
     @PostMapping
     public ResponseEntity<WorkoutPlanResponse> createWorkoutPlan(
-            @RequestBody WorkoutPlan workoutPlan,
+            @Valid @RequestBody WorkoutPlanRequestDTO request,
             Authentication authentication) {
 
         String username = authentication.getName();
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found: " + username));
 
         WorkoutPlan createdPlan =
                 workoutPlanService.createWorkoutPlan(
-                        workoutPlan,
+                        toEntity(request),
                         user);
 
         WorkoutPlanResponse response =
@@ -99,7 +103,7 @@ public class WorkoutPlanController {
     @PutMapping("/{id}")
     public ResponseEntity<WorkoutPlanResponse> updateWorkoutPlan(
             @PathVariable Long id,
-            @RequestBody WorkoutPlan updatedPlan,
+            @Valid @RequestBody WorkoutPlanRequestDTO request,
             Authentication authentication) {
 
         String username = authentication.getName();
@@ -116,7 +120,7 @@ public class WorkoutPlanController {
         WorkoutPlan updated =
                 workoutPlanService.updateWorkoutPlan(
                         id,
-                        updatedPlan);
+                        toEntity(request));
 
         return ResponseEntity.ok(
                 convertToResponse(updated));
@@ -141,6 +145,23 @@ public class WorkoutPlanController {
         workoutPlanService.deleteWorkoutPlan(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /*
+     * Only copies user-editable fields, so id / user / exercises
+     * can never be set from the request body.
+     */
+    private WorkoutPlan toEntity(
+            WorkoutPlanRequestDTO request) {
+
+        WorkoutPlan plan = new WorkoutPlan();
+
+        plan.setName(request.getName().trim());
+        plan.setDescription(request.getDescription());
+        plan.setCategory(request.getCategory());
+        plan.setDifficulty(request.getDifficulty());
+
+        return plan;
     }
 
     private WorkoutPlanResponse convertToResponse(

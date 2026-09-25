@@ -1,4 +1,3 @@
-
 package com.workouttracker.repository;
 
 import java.util.List;
@@ -12,5 +11,12 @@ public interface WorkoutPlanExerciseRepository
 
     List<WorkoutPlanExercise> findByWorkoutPlanIdOrderByExerciseOrderAsc(
             Long workoutPlanId
+    );
+
+    List<WorkoutPlanExercise> findByExerciseId(Long exerciseId);
+
+    WorkoutPlanExercise findByWorkoutPlanIdAndExerciseOrder(
+            Long workoutPlanId,
+            Integer exerciseOrder
     );
 }

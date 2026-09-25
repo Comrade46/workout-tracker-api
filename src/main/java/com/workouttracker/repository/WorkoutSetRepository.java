@@ -15,6 +15,8 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     List<WorkoutSet> findByExerciseId(Long exerciseId);
 
+    boolean existsByExerciseId(Long exerciseId);
+
     /**
      * Fetch all sets for a specific exercise across all sessions of a user,
      * ordered by weight descending and reps descending to find PRs quickly.

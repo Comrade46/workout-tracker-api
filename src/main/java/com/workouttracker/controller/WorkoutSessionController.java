@@ -5,6 +5,8 @@ import com.workouttracker.dto.WorkoutSessionResponseDTO;
 import com.workouttracker.security.UserDetailsImpl;
 import com.workouttracker.service.WorkoutService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,7 +28,7 @@ public class WorkoutSessionController {
     // Create a workout session for the currently logged-in user
     @PostMapping
     public ResponseEntity<WorkoutSessionResponseDTO> logWorkout(
-            @RequestBody WorkoutSessionRequestDTO requestDTO,
+            @Valid @RequestBody WorkoutSessionRequestDTO requestDTO,
             Authentication authentication) {
 
         Long userId = getAuthenticatedUserId(authentication);

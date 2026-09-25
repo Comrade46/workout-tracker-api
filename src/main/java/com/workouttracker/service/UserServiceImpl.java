@@ -3,6 +3,7 @@ package com.workouttracker.service;
 import com.workouttracker.dto.UserLoginRequestDTO;
 import com.workouttracker.dto.UserRegisterRequestDTO;
 import com.workouttracker.dto.UserResponseDTO;
+import com.workouttracker.exception.DuplicateResourceException;
 import com.workouttracker.exception.ResourceNotFoundException;
 import com.workouttracker.model.User;
 import com.workouttracker.repository.UserRepository;
@@ -24,20 +25,24 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDTO registerUser(UserRegisterRequestDTO requestDTO) {
-        if (userRepository.existsByUsername(requestDTO.getUsername())) {
-            throw new IllegalArgumentException("Username is already in use: " + requestDTO.getUsername());
+        // Normalise first so the duplicate checks match what is stored
+        String username = requestDTO.getUsername().trim();
+        String email = requestDTO.getEmail().trim().toLowerCase();
+
+        if (userRepository.existsByUsername(username)) {
+            throw new DuplicateResourceException("Username is already taken: " + username);
         }
 
-        if (userRepository.existsByEmail(requestDTO.getEmail())) {
-            throw new IllegalArgumentException("Email is already registered: " + requestDTO.getEmail());
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException("Email is already registered: " + email);
         }
 
         // Hash the raw password with BCrypt before persisting
         String encodedPassword = passwordEncoder.encode(requestDTO.getPassword());
 
         User user = User.builder()
-                .username(requestDTO.getUsername().trim())
-                .email(requestDTO.getEmail().trim().toLowerCase())
+                .username(username)
+                .email(email)
                 .password(encodedPassword)
                 .build();
 

@@ -5,16 +5,23 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.workouttracker.dto.WorkoutPlanExerciseRequestDTO;
 import com.workouttracker.dto.WorkoutPlanExerciseResponse;
+import com.workouttracker.dto.WorkoutPlanExercisesReplaceRequestDTO;
 import com.workouttracker.model.WorkoutPlanExercise;
+
+import jakarta.validation.Valid;
 import com.workouttracker.service.WorkoutPlanExerciseService;
 
 @RestController
@@ -26,24 +33,49 @@ public class WorkoutPlanExerciseController {
     public WorkoutPlanExerciseController(
             WorkoutPlanExerciseService workoutPlanExerciseService) {
 
-        this.workoutPlanExerciseService = workoutPlanExerciseService;
+        this.workoutPlanExerciseService =
+                workoutPlanExerciseService;
     }
 
     @PostMapping
-    public ResponseEntity<WorkoutPlanExerciseResponse> addExerciseToWorkoutPlan(
+    public ResponseEntity<WorkoutPlanExerciseResponse>
+    addExerciseToWorkoutPlan(
             @RequestParam Long workoutPlanId,
             @RequestParam Long exerciseId,
             @RequestParam Integer durationSeconds,
             @RequestParam Integer restSeconds,
-            @RequestParam Integer exerciseOrder) {
+            @RequestParam Integer exerciseOrder,
+            Authentication authentication) {
 
         WorkoutPlanExercise workoutPlanExercise =
-                workoutPlanExerciseService.addExerciseToWorkoutPlan(
-                        workoutPlanId,
-                        exerciseId,
-                        durationSeconds,
-                        restSeconds,
-                        exerciseOrder);
+                workoutPlanExerciseService
+                        .addExerciseToWorkoutPlan(
+                                workoutPlanId,
+                                exerciseId,
+                                durationSeconds,
+                                restSeconds,
+                                exerciseOrder,
+                                authentication.getName());
+
+        WorkoutPlanExerciseResponse response =
+                convertToResponse(workoutPlanExercise);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PostMapping("/configured")
+    public ResponseEntity<WorkoutPlanExerciseResponse>
+    addConfiguredExercise(
+            @Valid @RequestBody WorkoutPlanExerciseRequestDTO request,
+            Authentication authentication) {
+
+        WorkoutPlanExercise workoutPlanExercise =
+                workoutPlanExerciseService
+                        .addConfiguredExercise(
+                                request,
+                                authentication.getName());
 
         WorkoutPlanExerciseResponse response =
                 convertToResponse(workoutPlanExercise);
@@ -54,17 +86,40 @@ public class WorkoutPlanExerciseController {
     }
 
     /*
-     * Existing endpoint.
-     *
-     * Used by the workout-plan-exercise API directly.
+     * Replace all exercises of a plan in one transaction.
+     * Only the plan owner can do this.
      */
+    @PutMapping("/plan/{workoutPlanId}")
+    public ResponseEntity<List<WorkoutPlanExerciseResponse>>
+    replacePlanExercises(
+            @PathVariable Long workoutPlanId,
+            @Valid @RequestBody WorkoutPlanExercisesReplaceRequestDTO request,
+            Authentication authentication) {
+
+        List<WorkoutPlanExercise> saved =
+                workoutPlanExerciseService
+                        .replacePlanExercises(
+                                workoutPlanId,
+                                request.getExercises(),
+                                authentication.getName());
+
+        return ResponseEntity.ok(
+                saved.stream()
+                        .map(this::convertToResponse)
+                        .toList());
+    }
+
     @GetMapping("/plan/{workoutPlanId}")
-    public ResponseEntity<List<WorkoutPlanExerciseResponse>> getExercisesByWorkoutPlan(
-            @PathVariable Long workoutPlanId) {
+    public ResponseEntity<List<WorkoutPlanExerciseResponse>>
+    getExercisesByWorkoutPlan(
+            @PathVariable Long workoutPlanId,
+            Authentication authentication) {
 
         List<WorkoutPlanExercise> exercises =
-                workoutPlanExerciseService.getExercisesByWorkoutPlan(
-                        workoutPlanId);
+                workoutPlanExerciseService
+                        .getExercisesByWorkoutPlan(
+                                workoutPlanId,
+                                authentication.getName());
 
         List<WorkoutPlanExerciseResponse> responses =
                 exercises.stream()
@@ -74,31 +129,29 @@ public class WorkoutPlanExerciseController {
         return ResponseEntity.ok(responses);
     }
 
-    /*
-     * Workout Player endpoint.
-     *
-     * Frontend WorkoutPlayer.jsx calls:
-     *
-     * GET /api/workout-plan-exercises/workout-plans/{workoutPlanId}/exercises
-     *
-     * The existing service already contains the correct logic,
-     * so this endpoint reuses the existing method instead of
-     * duplicating service/database logic.
-     */
-    @GetMapping("/workout-plans/{workoutPlanId}/exercises")
-    public ResponseEntity<List<WorkoutPlanExerciseResponse>> getExercisesForWorkoutPlayer(
-            @PathVariable Long workoutPlanId) {
+    @GetMapping(
+            "/workout-plans/{workoutPlanId}/exercises")
+    public ResponseEntity<List<WorkoutPlanExerciseResponse>>
+    getExercisesForWorkoutPlayer(
+            @PathVariable Long workoutPlanId,
+            Authentication authentication) {
 
-        return getExercisesByWorkoutPlan(workoutPlanId);
+        return getExercisesByWorkoutPlan(
+                workoutPlanId,
+                authentication);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WorkoutPlanExerciseResponse> getWorkoutPlanExerciseById(
-            @PathVariable Long id) {
+    public ResponseEntity<WorkoutPlanExerciseResponse>
+    getWorkoutPlanExerciseById(
+            @PathVariable Long id,
+            Authentication authentication) {
 
         WorkoutPlanExercise workoutPlanExercise =
                 workoutPlanExerciseService
-                        .getWorkoutPlanExerciseById(id);
+                        .getWorkoutPlanExerciseById(
+                                id,
+                                authentication.getName());
 
         WorkoutPlanExerciseResponse response =
                 convertToResponse(workoutPlanExercise);
@@ -107,13 +160,19 @@ public class WorkoutPlanExerciseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExerciseFromWorkoutPlan(
-            @PathVariable Long id) {
+    public ResponseEntity<Void>
+    deleteExerciseFromWorkoutPlan(
+            @PathVariable Long id,
+            Authentication authentication) {
 
         workoutPlanExerciseService
-                .deleteExerciseFromWorkoutPlan(id);
+                .deleteExerciseFromWorkoutPlan(
+                        id,
+                        authentication.getName());
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
     private WorkoutPlanExerciseResponse convertToResponse(
@@ -122,12 +181,18 @@ public class WorkoutPlanExerciseController {
         WorkoutPlanExerciseResponse response =
                 new WorkoutPlanExerciseResponse();
 
-        response.setId(workoutPlanExercise.getId());
+        response.setId(
+                workoutPlanExercise.getId());
 
         response.setWorkoutPlanId(
                 workoutPlanExercise
                         .getWorkoutPlan()
                         .getId());
+
+        response.setWorkoutPlanName(
+                workoutPlanExercise
+                        .getWorkoutPlan()
+                        .getName());
 
         response.setExerciseId(
                 workoutPlanExercise
@@ -144,16 +209,25 @@ public class WorkoutPlanExerciseController {
                         .getExercise()
                         .getCategory());
 
-        response.setWorkoutType(
-                workoutPlanExercise
-                        .getExercise()
-                        .getWorkoutType()
-                        .toString());
+        if (workoutPlanExercise
+                .getExercise()
+                .getWorkoutType() != null) {
+
+            response.setWorkoutType(
+                    workoutPlanExercise
+                            .getExercise()
+                            .getWorkoutType()
+                            .toString());
+        }
 
         response.setEquipment(
                 workoutPlanExercise
                         .getExercise()
                         .getEquipment());
+
+        response.setExerciseOrder(
+                workoutPlanExercise
+                        .getExerciseOrder());
 
         response.setDurationSeconds(
                 workoutPlanExercise
@@ -163,9 +237,30 @@ public class WorkoutPlanExerciseController {
                 workoutPlanExercise
                         .getRestSeconds());
 
-        response.setExerciseOrder(
+        /*
+         * WorkoutPlanExerciseResponse expects String,
+         * while WorkoutPlanExercise stores ExerciseTrackingType.
+         *
+         * Convert TIME / REPS enum to String.
+         */
+        if (workoutPlanExercise.getTrackingType() != null) {
+
+            response.setTrackingType(
+                    workoutPlanExercise
+                            .getTrackingType()
+                            .toString());
+        } else {
+
+            response.setTrackingType(null);
+        }
+
+        response.setTargetValue(
                 workoutPlanExercise
-                        .getExerciseOrder());
+                        .getTargetValue());
+
+        response.setTargetSets(
+                workoutPlanExercise
+                        .getTargetSets());
 
         return response;
     }

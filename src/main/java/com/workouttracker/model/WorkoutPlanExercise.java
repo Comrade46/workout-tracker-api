@@ -21,24 +21,68 @@ public class WorkoutPlanExercise {
     @Column(nullable = false)
     private Integer exerciseOrder;
 
+    /*
+     * Existing field.
+     *
+     * Kept for backward compatibility with the current
+     * Workout Tracker application.
+     */
     @Column(nullable = false)
     private Integer durationSeconds;
 
+    /*
+     * Existing field.
+     */
     @Column(nullable = false)
     private Integer restSeconds;
 
+    /*
+     * New field.
+     *
+     * TIME:
+     *     targetValue represents seconds.
+     *
+     * REPS:
+     *     targetValue represents repetitions.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tracking_type", length = 20)
+    private ExerciseTrackingType trackingType;
 
-    // ==============================
-    // DEFAULT CONSTRUCTOR
-    // ==============================
+    /*
+     * New field.
+     *
+     * TIME example:
+     *     30 = 30 seconds
+     *
+     * REPS example:
+     *     12 = 12 repetitions
+     */
+    @Column(name = "target_value")
+    private Integer targetValue;
+
+    /*
+     * New field.
+     *
+     * Example:
+     *     Bench Press -> 3
+     *     Plank -> 3
+     */
+    @Column(name = "target_sets")
+    private Integer targetSets;
+
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
 
     public WorkoutPlanExercise() {
     }
 
 
-    // ==============================
-    // GETTERS AND SETTERS
-    // ==============================
+    // =========================================================
+    // GETTERS / SETTERS
+    // =========================================================
 
     public Long getId() {
         return id;
@@ -91,5 +135,34 @@ public class WorkoutPlanExercise {
 
     public void setRestSeconds(Integer restSeconds) {
         this.restSeconds = restSeconds;
+    }
+
+
+    public ExerciseTrackingType getTrackingType() {
+        return trackingType;
+    }
+
+    public void setTrackingType(
+            ExerciseTrackingType trackingType) {
+
+        this.trackingType = trackingType;
+    }
+
+
+    public Integer getTargetValue() {
+        return targetValue;
+    }
+
+    public void setTargetValue(Integer targetValue) {
+        this.targetValue = targetValue;
+    }
+
+
+    public Integer getTargetSets() {
+        return targetSets;
+    }
+
+    public void setTargetSets(Integer targetSets) {
+        this.targetSets = targetSets;
     }
 }

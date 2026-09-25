@@ -1,5 +1,6 @@
 package com.workouttracker.dto;
 
+import com.workouttracker.model.ExerciseTrackingType;
 import com.workouttracker.model.WorkoutType;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,11 @@ public class ExerciseResponseDTO {
     private Integer durationSeconds;
     private Integer restSeconds;
     private LocalDateTime createdAt;
+    private ExerciseTrackingType trackingType;
+    private Integer defaultReps;
+
+    // True when the current user may edit / delete this exercise
+    private boolean editable;
 
     public ExerciseResponseDTO() {}
 
@@ -42,6 +48,8 @@ public class ExerciseResponseDTO {
         private Integer durationSeconds = 30;
         private Integer restSeconds = 15;
         private LocalDateTime createdAt;
+        private ExerciseTrackingType trackingType;
+        private Integer defaultReps;
 
         public Builder id(Long id) { this.id = id; return this; }
         public Builder name(String name) { this.name = name; return this; }
@@ -52,9 +60,14 @@ public class ExerciseResponseDTO {
         public Builder durationSeconds(Integer durationSeconds) { this.durationSeconds = durationSeconds; return this; }
         public Builder restSeconds(Integer restSeconds) { this.restSeconds = restSeconds; return this; }
         public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public Builder trackingType(ExerciseTrackingType trackingType) { this.trackingType = trackingType; return this; }
+        public Builder defaultReps(Integer defaultReps) { this.defaultReps = defaultReps; return this; }
 
         public ExerciseResponseDTO build() {
-            return new ExerciseResponseDTO(id, name, category, workoutType, equipment, isCustom, durationSeconds, restSeconds, createdAt);
+            ExerciseResponseDTO dto = new ExerciseResponseDTO(id, name, category, workoutType, equipment, isCustom, durationSeconds, restSeconds, createdAt);
+            dto.setTrackingType(trackingType);
+            dto.setDefaultReps(defaultReps);
+            return dto;
         }
     }
 
@@ -76,4 +89,10 @@ public class ExerciseResponseDTO {
     public void setRestSeconds(Integer restSeconds) { this.restSeconds = restSeconds; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public ExerciseTrackingType getTrackingType() { return trackingType; }
+    public void setTrackingType(ExerciseTrackingType trackingType) { this.trackingType = trackingType; }
+    public Integer getDefaultReps() { return defaultReps; }
+    public void setDefaultReps(Integer defaultReps) { this.defaultReps = defaultReps; }
+    public boolean isEditable() { return editable; }
+    public void setEditable(boolean editable) { this.editable = editable; }
 }
