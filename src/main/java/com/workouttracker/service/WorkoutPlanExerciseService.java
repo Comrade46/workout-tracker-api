@@ -65,27 +65,26 @@ public class WorkoutPlanExerciseService {
         workoutPlanExercise.setExercise(exercise);
         workoutPlanExercise.setExerciseOrder(exerciseOrder);
 
-        /*
-         * Existing records were time-based.
-         * Keep the old duration/rest behavior.
-         */
-        workoutPlanExercise.setDurationSeconds(
-                durationSeconds != null ? durationSeconds : 30);
-
         workoutPlanExercise.setRestSeconds(
                 restSeconds != null ? restSeconds : 15);
 
         /*
-         * New tracking fields.
-         *
-         * Existing API calls do not specify tracking type,
-         * therefore default them to TIME.
+         * Tracking type always follows the exercise.
+         * durationSeconds is the planned target only for TIME exercises.
          */
-        workoutPlanExercise.setTrackingType(
-                ExerciseTrackingType.TIME);
+        ExerciseTrackingType trackingType =
+                ExerciseTracking.resolve(exercise);
 
-        workoutPlanExercise.setTargetValue(
-                durationSeconds != null ? durationSeconds : 30);
+        int target =
+                ExerciseTracking.planTarget(
+                        exercise,
+                        ExerciseTrackingType.TIME,
+                        durationSeconds);
+
+        workoutPlanExercise.setTrackingType(trackingType);
+        workoutPlanExercise.setTargetValue(target);
+        workoutPlanExercise.setDurationSeconds(
+                trackingType == ExerciseTrackingType.TIME ? target : 0);
 
         workoutPlanExercise.setTargetSets(1);
 
@@ -205,58 +204,29 @@ public class WorkoutPlanExerciseService {
                         ? request.getRestSeconds()
                         : 15);
 
+        /*
+         * The exercise decides TIME or REPS (Plank = TIME, Push-Ups = REPS).
+         * The requested type is only used to keep the planned target
+         * when it matches; otherwise the exercise's default is used.
+         */
         ExerciseTrackingType trackingType =
-                request.getTrackingType();
+                ExerciseTracking.resolve(exercise);
 
-        if (trackingType == null) {
-            trackingType = ExerciseTrackingType.TIME;
-        }
+        int target =
+                ExerciseTracking.planTarget(
+                        exercise,
+                        request.getTrackingType(),
+                        request.getTargetValue());
 
         workoutPlanExercise.setTrackingType(trackingType);
+        workoutPlanExercise.setTargetValue(target);
 
         /*
-         * TIME based exercise
-         *
-         * targetValue = duration in seconds
+         * duration_seconds is NOT NULL in the database: seconds for TIME
+         * exercises, 0 for REPS exercises.
          */
-        if (trackingType == ExerciseTrackingType.TIME) {
-
-            Integer duration =
-                    request.getTargetValue();
-
-            if (duration == null || duration <= 0) {
-                duration = 30;
-            }
-
-            workoutPlanExercise.setTargetValue(duration);
-            workoutPlanExercise.setDurationSeconds(duration);
-        }
-
-        /*
-         * REPS based exercise
-         *
-         * targetValue = number of repetitions
-         */
-        else if (trackingType == ExerciseTrackingType.REPS) {
-
-            Integer reps =
-                    request.getTargetValue();
-
-            if (reps == null || reps <= 0) {
-                reps = 10;
-            }
-
-            workoutPlanExercise.setTargetValue(reps);
-
-            /*
-             * Keep duration valid because the database currently
-             * contains non-null durationSeconds for old records.
-             *
-             * For REPS exercises this value is not used by the
-             * workout player as the exercise target.
-             */
-            workoutPlanExercise.setDurationSeconds(0);
-        }
+        workoutPlanExercise.setDurationSeconds(
+                trackingType == ExerciseTrackingType.TIME ? target : 0);
 
         Integer targetSets =
                 request.getTargetSets();

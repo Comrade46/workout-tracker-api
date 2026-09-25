@@ -102,8 +102,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                                 )
                         );
 
+        // Reuse the sets already loaded above instead of querying again.
         List<PersonalRecordDTO> prs =
-                getUserPersonalRecords(userId);
+                buildPersonalRecords(allSets);
 
         return AnalyticsSummaryDTO.builder()
                 .totalWorkouts(totalWorkouts)
@@ -124,8 +125,12 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public List<PersonalRecordDTO> getUserPersonalRecords(
             Long userId) {
 
-        List<WorkoutSet> allSets =
-                setRepository.findAllByUserId(userId);
+        return buildPersonalRecords(
+                setRepository.findAllByUserId(userId));
+    }
+
+    private List<PersonalRecordDTO> buildPersonalRecords(
+            List<WorkoutSet> allSets) {
 
         Map<Exercise, List<WorkoutSet>> setsByExercise =
                 allSets.stream()

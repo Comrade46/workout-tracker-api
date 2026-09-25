@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.workouttracker.dto.WorkoutPlanExerciseRequestDTO;
 import com.workouttracker.dto.WorkoutPlanExerciseResponse;
 import com.workouttracker.dto.WorkoutPlanExercisesReplaceRequestDTO;
+import com.workouttracker.model.Exercise;
+import com.workouttracker.model.ExerciseTrackingType;
 import com.workouttracker.model.WorkoutPlanExercise;
+import com.workouttracker.service.ExerciseTracking;
 
 import jakarta.validation.Valid;
 import com.workouttracker.service.WorkoutPlanExerciseService;
@@ -238,29 +241,28 @@ public class WorkoutPlanExerciseController {
                         .getRestSeconds());
 
         /*
-         * WorkoutPlanExerciseResponse expects String,
-         * while WorkoutPlanExercise stores ExerciseTrackingType.
-         *
-         * Convert TIME / REPS enum to String.
+         * TIME / REPS always follows the exercise (Plank = TIME,
+         * Russian Twists = REPS). Rows saved before this rule - with no
+         * type or the wrong type - are corrected here, and their target
+         * falls back to the exercise's default seconds / reps.
          */
-        if (workoutPlanExercise.getTrackingType() != null) {
+        Exercise exercise = workoutPlanExercise.getExercise();
 
-            response.setTrackingType(
-                    workoutPlanExercise
-                            .getTrackingType()
-                            .toString());
-        } else {
+        ExerciseTrackingType trackingType =
+                ExerciseTracking.resolve(exercise);
 
-            response.setTrackingType(null);
-        }
+        response.setTrackingType(trackingType.toString());
 
         response.setTargetValue(
-                workoutPlanExercise
-                        .getTargetValue());
+                ExerciseTracking.planTarget(
+                        exercise,
+                        workoutPlanExercise.getTrackingType(),
+                        workoutPlanExercise.getTargetValue()));
+
+        Integer targetSets = workoutPlanExercise.getTargetSets();
 
         response.setTargetSets(
-                workoutPlanExercise
-                        .getTargetSets());
+                targetSets == null || targetSets < 1 ? 1 : targetSets);
 
         return response;
     }

@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,24 +37,9 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     private final Set<String> adminUsernames;
 
-    private static final int DEFAULT_REPS = 12;
-    private static final int DEFAULT_DURATION_SECONDS = 30;
+    private static final int DEFAULT_REPS = ExerciseTracking.DEFAULT_REPS;
+    private static final int DEFAULT_DURATION_SECONDS = ExerciseTracking.DEFAULT_DURATION_SECONDS;
     private static final int DEFAULT_REST_SECONDS = 15;
-
-    /*
-     * Whole-word keywords used to classify exercises that were
-     * created before tracking_type existed. Anything else is REPS.
-     *
-     * Whole words avoid false matches such as "crunches" -> "run"
-     * or "walking lunges" -> "walk".
-     */
-    private static final Pattern TIME_KEYWORDS = Pattern.compile(
-            "\\b(plank|hold|wall sit|dead hang|run|running|jog|jogging"
-                    + "|sprint|walk|cycling|treadmill|elliptical|skipping"
-                    + "|jump rope|stretch|high knees|butt kicks"
-                    + "|mountain climbers?|jumping jacks?|battle ropes?"
-                    + "|carry|hollow body|l-sit|shadow boxing)\\b"
-    );
 
     public ExerciseServiceImpl(
             ExerciseRepository exerciseRepository,
@@ -353,34 +337,13 @@ public class ExerciseServiceImpl implements ExerciseService {
         }
     }
 
-    private ExerciseTrackingType resolveTrackingType(
-            Exercise exercise
-    ) {
-
-        if (exercise.getTrackingType() != null) {
-            return exercise.getTrackingType();
-        }
-
-        String name = exercise.getName() == null
-                ? ""
-                : exercise.getName().toLowerCase(Locale.ROOT);
-
-        boolean timeBased =
-                "cardio".equalsIgnoreCase(exercise.getCategory())
-                        || TIME_KEYWORDS.matcher(name).find();
-
-        return timeBased
-                ? ExerciseTrackingType.TIME
-                : ExerciseTrackingType.REPS;
-    }
-
     private ExerciseResponseDTO mapToResponseDTO(
             Exercise exercise,
             UserDetailsImpl user
     ) {
 
         ExerciseTrackingType trackingType =
-                resolveTrackingType(exercise);
+                ExerciseTracking.resolve(exercise);
 
         boolean timeBased =
                 trackingType == ExerciseTrackingType.TIME;
