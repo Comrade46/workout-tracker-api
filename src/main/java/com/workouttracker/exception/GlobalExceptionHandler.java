@@ -4,6 +4,7 @@ import com.workouttracker.dto.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -137,6 +138,24 @@ public class GlobalExceptionHandler {
     /**
      * Handle resources that are still referenced by other data (409)
      */
+    /*
+     * The same record was saved twice at the same moment (unique key),
+     * e.g. two taps on Save. Nothing is lost; the client can reload.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleDataIntegrity(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+
+        log.warn("Data conflict on {} {}: {}", request.getMethod(), request.getRequestURI(),
+                ex.getMostSpecificCause().getMessage());
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "This was just saved from another request. Please refresh and try again.",
+                request);
+    }
+
     @ExceptionHandler(ResourceInUseException.class)
     public ResponseEntity<ErrorResponseDTO> handleResourceInUse(
             ResourceInUseException ex,

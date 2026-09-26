@@ -1,6 +1,7 @@
 package com.workouttracker.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,6 +31,22 @@ public class User {
     // Login tokens issued before this moment are no longer accepted.
     @Column(name = "password_changed_at")
     private LocalDateTime passwordChangedAt;
+
+    // ---- Body & goals (all optional) ----
+
+    @Column(name = "height_cm")
+    private Integer heightCm;
+
+    // Workouts per week the user aims for (1-7)
+    @Column(name = "weekly_goal")
+    private Integer weeklyGoal;
+
+    // BUILD_MUSCLE, LOSE_WEIGHT, GET_FIT or STAY_ACTIVE
+    @Column(name = "fitness_goal", length = 20)
+    private String fitnessGoal;
+
+    @Column(name = "target_weight_kg", precision = 5, scale = 1)
+    private BigDecimal targetWeightKg;
 
     public User() {}
 
@@ -89,4 +106,16 @@ public class User {
 
     public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
     public void setPasswordChangedAt(LocalDateTime passwordChangedAt) { this.passwordChangedAt = passwordChangedAt; }
+
+    public Integer getHeightCm() { return heightCm; }
+    public void setHeightCm(Integer heightCm) { this.heightCm = heightCm; }
+
+    public Integer getWeeklyGoal() { return weeklyGoal; }
+    public void setWeeklyGoal(Integer weeklyGoal) { this.weeklyGoal = weeklyGoal; }
+
+    public String getFitnessGoal() { return fitnessGoal; }
+    public void setFitnessGoal(String fitnessGoal) { this.fitnessGoal = fitnessGoal; }
+
+    public BigDecimal getTargetWeightKg() { return targetWeightKg; }
+    public void setTargetWeightKg(BigDecimal targetWeightKg) { this.targetWeightKg = targetWeightKg; }
 }
