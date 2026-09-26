@@ -1,6 +1,7 @@
 package com.workouttracker.dto;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ public class WorkoutSessionRequestDTO {
     private String notes;
 
     @Min(value = 0, message = "Duration cannot be negative")
+    @Max(value = 1440, message = "Duration cannot be more than 24 hours")
     private Integer durationMinutes;
 
     @NotEmpty(message = "A workout session must contain at least one set")

@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 @Service
 public class AnalyticsServiceImpl implements AnalyticsService {
 
+    private static final int MAX_SESSION_MINUTES = 24 * 60;
+
     private final WorkoutSessionRepository sessionRepository;
     private final WorkoutSetRepository setRepository;
     private final ExerciseRepository exerciseRepository;
@@ -57,9 +59,12 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         long totalSets = allSets.size();
 
+        // Durations over 24 hours are impossible (bad data) and are ignored.
         int totalDuration = sessions.stream()
                 .mapToInt(session ->
                         session.getDurationMinutes() != null
+                                && session.getDurationMinutes() >= 0
+                                && session.getDurationMinutes() <= MAX_SESSION_MINUTES
                                 ? session.getDurationMinutes()
                                 : 0)
                 .sum();
