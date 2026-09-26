@@ -16,6 +16,8 @@ public class WorkoutSessionResponseDTO {
     private Integer totalSets;
     private LocalDateTime createdAt;
     private List<WorkoutSetResponseDTO> sets;
+    private String feeling;
+    private Integer intensity;
 
     public WorkoutSessionResponseDTO() {}
 
@@ -84,4 +86,10 @@ public class WorkoutSessionResponseDTO {
 
     public List<WorkoutSetResponseDTO> getSets() { return sets; }
     public void setSets(List<WorkoutSetResponseDTO> sets) { this.sets = sets; }
+
+    public String getFeeling() { return feeling; }
+    public void setFeeling(String feeling) { this.feeling = feeling; }
+
+    public Integer getIntensity() { return intensity; }
+    public void setIntensity(Integer intensity) { this.intensity = intensity; }
 }

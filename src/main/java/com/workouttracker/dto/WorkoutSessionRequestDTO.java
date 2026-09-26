@@ -27,6 +27,13 @@ public class WorkoutSessionRequestDTO {
     @Pattern(regexp = "^[A-Za-z0-9-]*$", message = "Client ID may only contain letters, digits and dashes")
     private String clientId;
 
+    @Pattern(regexp = "^(EASY|RIGHT|HARD)$", message = "Feeling must be EASY, RIGHT or HARD")
+    private String feeling;
+
+    @Min(value = -3, message = "Intensity must be between -3 and 3")
+    @Max(value = 3, message = "Intensity must be between -3 and 3")
+    private Integer intensity;
+
     @NotEmpty(message = "A workout session must contain at least one set")
     @Valid
     private List<WorkoutSetRequestDTO> sets;
@@ -48,6 +55,12 @@ public class WorkoutSessionRequestDTO {
 
     public Integer getDurationMinutes() { return durationMinutes; }
     public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
+
+    public String getFeeling() { return feeling; }
+    public void setFeeling(String feeling) { this.feeling = feeling; }
+
+    public Integer getIntensity() { return intensity; }
+    public void setIntensity(Integer intensity) { this.intensity = intensity; }
 
     public String getClientId() { return clientId; }
     public void setClientId(String clientId) { this.clientId = clientId; }

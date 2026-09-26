@@ -8,6 +8,9 @@ import java.util.List;
 
 public interface WorkoutService {
 
+    // Store the "How did it feel?" answer for a saved workout
+    WorkoutSessionResponseDTO setFeeling(String clientId, String feeling, Long userId);
+
     // Workout already saved with this phone-made ID, or null
     WorkoutSessionResponseDTO findByClientId(String clientId, Long userId);
 

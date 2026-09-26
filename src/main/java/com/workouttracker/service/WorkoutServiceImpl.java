@@ -115,6 +115,8 @@ public class WorkoutServiceImpl implements WorkoutService {
         }
 
         session.setClientId(clientId);
+        session.setFeeling(requestDTO.getFeeling());
+        session.setIntensity(requestDTO.getIntensity());
 
         WorkoutSession savedSession =
                 workoutSessionRepository.save(
@@ -344,7 +346,7 @@ public class WorkoutServiceImpl implements WorkoutService {
             }
         }
 
-        return WorkoutSessionResponseDTO
+        WorkoutSessionResponseDTO response = WorkoutSessionResponseDTO
                 .builder()
                 .id(
                         session.getId()
@@ -374,5 +376,33 @@ public class WorkoutServiceImpl implements WorkoutService {
                         setDTOs
                 )
                 .build();
+
+        response.setFeeling(session.getFeeling());
+        response.setIntensity(session.getIntensity());
+
+        return response;
+    }
+
+    // "How did it feel?" answered after the workout was saved.
+    @Override
+    @Transactional
+    public WorkoutSessionResponseDTO setFeeling(
+            String clientId,
+            String feeling,
+            Long userId) {
+
+        String id = normaliseClientId(clientId);
+
+        WorkoutSession session = id == null
+                ? null
+                : workoutSessionRepository.findByUserIdAndClientId(userId, id).orElse(null);
+
+        if (session == null) {
+            throw new ResourceNotFoundException("Workout not found for this client ID");
+        }
+
+        session.setFeeling(feeling);
+
+        return mapToResponseDTO(session);
     }
 }

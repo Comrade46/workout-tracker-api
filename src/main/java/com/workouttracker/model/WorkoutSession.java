@@ -43,6 +43,14 @@ public class WorkoutSession {
     @Column(name = "client_id", length = 64)
     private String clientId;
 
+    // "How did it feel?" after the workout: EASY, RIGHT or HARD
+    @Column(name = "feeling", length = 10)
+    private String feeling;
+
+    // How much the targets were adjusted: -3..+3 (10% per step)
+    @Column(name = "intensity")
+    private Integer intensity;
+
     @OneToMany(
         mappedBy = "session",
         cascade = CascadeType.ALL,
@@ -209,6 +217,22 @@ public class WorkoutSession {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
+    }
+
+    public String getFeeling() {
+        return feeling;
+    }
+
+    public void setFeeling(String feeling) {
+        this.feeling = feeling;
+    }
+
+    public Integer getIntensity() {
+        return intensity;
+    }
+
+    public void setIntensity(Integer intensity) {
+        this.intensity = intensity;
     }
 
     public void setSets(List<WorkoutSet> sets) {

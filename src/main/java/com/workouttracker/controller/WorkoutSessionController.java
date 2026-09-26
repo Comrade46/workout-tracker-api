@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workout-sessions")
@@ -51,6 +52,27 @@ public class WorkoutSessionController {
         return new ResponseEntity<>(
                 response,
                 HttpStatus.CREATED
+        );
+    }
+
+    /*
+     * "How did it feel?" after the workout (EASY / RIGHT / HARD).
+     * Identified by the phone's clientId, so it works whether or not the
+     * app already knows the server's ID.
+     */
+    @PutMapping("/feeling")
+    public ResponseEntity<WorkoutSessionResponseDTO> setFeeling(
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+
+        String feeling = body.get("feeling");
+
+        if (feeling == null || !feeling.matches("^(EASY|RIGHT|HARD)$")) {
+            throw new IllegalArgumentException("Feeling must be EASY, RIGHT or HARD");
+        }
+
+        return ResponseEntity.ok(
+                workoutService.setFeeling(body.get("clientId"), feeling, getAuthenticatedUserId(authentication))
         );
     }
 
