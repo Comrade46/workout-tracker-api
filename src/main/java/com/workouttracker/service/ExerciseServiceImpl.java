@@ -11,16 +11,14 @@ import com.workouttracker.model.WorkoutType;
 import com.workouttracker.repository.ExerciseRepository;
 import com.workouttracker.repository.WorkoutPlanExerciseRepository;
 import com.workouttracker.repository.WorkoutSetRepository;
+import com.workouttracker.security.AdminAccess;
 import com.workouttracker.security.UserDetailsImpl;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,11 +29,8 @@ public class ExerciseServiceImpl implements ExerciseService {
     private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
     private final WorkoutSetRepository workoutSetRepository;
 
-    /*
-     * Usernames allowed to edit / delete built-in exercises.
-     * Configured with ADMIN_USERNAMES (comma separated).
-     */
-    private final Set<String> adminUsernames;
+    // Admins (ADMIN_USERNAMES) may edit / delete built-in exercises.
+    private final AdminAccess adminAccess;
 
     private static final int DEFAULT_REPS = ExerciseTracking.DEFAULT_REPS;
     private static final int DEFAULT_DURATION_SECONDS = ExerciseTracking.DEFAULT_DURATION_SECONDS;
@@ -45,16 +40,13 @@ public class ExerciseServiceImpl implements ExerciseService {
             ExerciseRepository exerciseRepository,
             WorkoutPlanExerciseRepository workoutPlanExerciseRepository,
             WorkoutSetRepository workoutSetRepository,
-            @Value("${workouttracker.app.admin-usernames:}") String adminUsernames
+            AdminAccess adminAccess
     ) {
         this.exerciseRepository = exerciseRepository;
         this.workoutPlanExerciseRepository =
                 workoutPlanExerciseRepository;
         this.workoutSetRepository = workoutSetRepository;
-        this.adminUsernames = Arrays.stream(adminUsernames.split(","))
-                .map(String::trim)
-                .filter(name -> !name.isEmpty())
-                .collect(Collectors.toUnmodifiableSet());
+        this.adminAccess = adminAccess;
     }
 
     @Override
@@ -237,7 +229,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     // =========================================================
 
     private boolean isAdmin(UserDetailsImpl user) {
-        return adminUsernames.contains(user.getUsername());
+        return adminAccess.isAdmin(user.getUsername());
     }
 
     /*

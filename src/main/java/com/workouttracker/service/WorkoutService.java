@@ -8,6 +8,9 @@ import java.util.List;
 
 public interface WorkoutService {
 
+    // Workout already saved with this phone-made ID, or null
+    WorkoutSessionResponseDTO findByClientId(String clientId, Long userId);
+
     WorkoutSessionResponseDTO logWorkout(
             WorkoutSessionRequestDTO requestDTO,
             Long userId

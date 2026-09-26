@@ -71,4 +71,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         return details;
     }
+
+    // Forget cached details, e.g. after a password change.
+    public void evict(String username) {
+        tokenUserCache.remove(username);
+    }
 }

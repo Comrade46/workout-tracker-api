@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
@@ -20,6 +21,11 @@ public class WorkoutSessionRequestDTO {
     @Min(value = 0, message = "Duration cannot be negative")
     @Max(value = 1440, message = "Duration cannot be more than 24 hours")
     private Integer durationMinutes;
+
+    // Optional ID from the phone's upload queue (prevents duplicates)
+    @Size(max = 64, message = "Client ID must not exceed 64 characters")
+    @Pattern(regexp = "^[A-Za-z0-9-]*$", message = "Client ID may only contain letters, digits and dashes")
+    private String clientId;
 
     @NotEmpty(message = "A workout session must contain at least one set")
     @Valid
@@ -42,6 +48,9 @@ public class WorkoutSessionRequestDTO {
 
     public Integer getDurationMinutes() { return durationMinutes; }
     public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
+
+    public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
 
     public List<WorkoutSetRequestDTO> getSets() { return sets; }
     public void setSets(List<WorkoutSetRequestDTO> sets) { this.sets = sets; }

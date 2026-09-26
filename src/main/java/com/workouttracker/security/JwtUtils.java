@@ -16,7 +16,7 @@ public class JwtUtils {
     private String jwtSecret;
 
     @Value("${workouttracker.app.jwtExpirationMs}")
-    private int jwtExpirationMs;
+    private long jwtExpirationMs;
 
     // Generate Token from Username
     public String generateJwtToken(String username) {
@@ -36,6 +36,18 @@ public class JwtUtils {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    // Issued-at time of a valid token, in epoch seconds
+    public long getIssuedAtEpochSecond(String token) {
+        Date issuedAt = Jwts.parser()
+                .verifyWith(key())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getIssuedAt();
+
+        return issuedAt == null ? 0 : issuedAt.getTime() / 1000;
     }
 
     // Validate Token Integrity and Expiration

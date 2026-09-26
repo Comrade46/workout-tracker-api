@@ -23,6 +23,14 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    // Set after an admin reset: the user must pick a new password.
+    @Column(name = "must_change_password")
+    private Boolean mustChangePassword;
+
+    // Login tokens issued before this moment are no longer accepted.
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     public User() {}
 
     public User(Long id, String username, String email, String password, LocalDateTime createdAt) {
@@ -75,4 +83,10 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isMustChangePassword() { return Boolean.TRUE.equals(mustChangePassword); }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
+
+    public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
+    public void setPasswordChangedAt(LocalDateTime passwordChangedAt) { this.passwordChangedAt = passwordChangedAt; }
 }

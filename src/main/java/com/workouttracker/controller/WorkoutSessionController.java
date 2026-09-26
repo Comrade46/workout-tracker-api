@@ -7,6 +7,7 @@ import com.workouttracker.service.WorkoutService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,8 +34,19 @@ public class WorkoutSessionController {
 
         Long userId = getAuthenticatedUserId(authentication);
 
-        WorkoutSessionResponseDTO response =
-                workoutService.logWorkout(requestDTO, userId);
+        WorkoutSessionResponseDTO response;
+
+        try {
+            response = workoutService.logWorkout(requestDTO, userId);
+        } catch (DataIntegrityViolationException duplicate) {
+            // The same workout arrived twice at the same moment: the
+            // other request saved it, so return that one.
+            response = workoutService.findByClientId(requestDTO.getClientId(), userId);
+
+            if (response == null) {
+                throw duplicate;
+            }
+        }
 
         return new ResponseEntity<>(
                 response,

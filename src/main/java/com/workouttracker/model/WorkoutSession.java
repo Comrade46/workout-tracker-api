@@ -7,7 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "workout_sessions")
+@Table(
+    name = "workout_sessions",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_workout_sessions_user_client",
+        columnNames = {"user_id", "client_id"}
+    )
+)
 public class WorkoutSession {
 
     @Id
@@ -28,6 +34,14 @@ public class WorkoutSession {
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    /*
+     * ID made by the phone when the workout was finished. The phone may
+     * send the same workout again (e.g. the first upload's answer was
+     * lost); the server then returns the saved one instead of a copy.
+     */
+    @Column(name = "client_id", length = 64)
+    private String clientId;
 
     @OneToMany(
         mappedBy = "session",
@@ -187,6 +201,14 @@ public class WorkoutSession {
 
     public List<WorkoutSet> getSets() {
         return sets;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public void setSets(List<WorkoutSet> sets) {

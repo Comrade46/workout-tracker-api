@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -17,6 +18,9 @@ public class UserDetailsImpl implements UserDetails {
     @JsonIgnore
     private String password;
 
+    // Tokens issued before this (epoch seconds) are rejected; 0 = none.
+    private long tokensValidFromEpochSecond;
+
     public UserDetailsImpl(Long id, String username, String email, String password) {
         this.id = id;
         this.username = username;
@@ -25,15 +29,24 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(User user) {
-        return new UserDetailsImpl(
+        UserDetailsImpl details = new UserDetailsImpl(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword());
+
+        if (user.getPasswordChangedAt() != null) {
+            details.tokensValidFromEpochSecond = user.getPasswordChangedAt()
+                    .atZone(ZoneId.systemDefault())
+                    .toEpochSecond();
+        }
+
+        return details;
     }
 
     public Long getId() { return id; }
     public String getEmail() { return email; }
+    public long getTokensValidFromEpochSecond() { return tokensValidFromEpochSecond; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

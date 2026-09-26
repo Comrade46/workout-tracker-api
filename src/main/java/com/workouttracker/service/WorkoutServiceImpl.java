@@ -47,6 +47,19 @@ public class WorkoutServiceImpl implements WorkoutService {
             WorkoutSessionRequestDTO requestDTO,
             Long userId) {
 
+        String clientId = normaliseClientId(requestDTO.getClientId());
+
+        // Sent again from the phone's queue: return the saved workout.
+        if (clientId != null) {
+            WorkoutSession existing = workoutSessionRepository
+                    .findByUserIdAndClientId(userId, clientId)
+                    .orElse(null);
+
+            if (existing != null) {
+                return mapToResponseDTO(existing);
+            }
+        }
+
         WorkoutSession session =
                 WorkoutSession.builder()
                         .userId(userId)
@@ -101,12 +114,34 @@ public class WorkoutServiceImpl implements WorkoutService {
             session.addSet(set);
         }
 
+        session.setClientId(clientId);
+
         WorkoutSession savedSession =
                 workoutSessionRepository.save(
                         session
                 );
 
         return mapToResponseDTO(savedSession);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkoutSessionResponseDTO findByClientId(
+            String clientId,
+            Long userId) {
+
+        String id = normaliseClientId(clientId);
+
+        return id == null
+                ? null
+                : workoutSessionRepository
+                        .findByUserIdAndClientId(userId, id)
+                        .map(this::mapToResponseDTO)
+                        .orElse(null);
+    }
+
+    private static String normaliseClientId(String clientId) {
+        return clientId == null || clientId.isBlank() ? null : clientId.trim();
     }
 
     // =========================================================

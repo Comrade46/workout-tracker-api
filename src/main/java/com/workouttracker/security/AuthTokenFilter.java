@@ -33,6 +33,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
                 UserDetails userDetails = userDetailsService.loadUserForToken(username);
+
+                // Password changed or reset since this token was issued:
+                // treat the request as logged out.
+                if (userDetails instanceof UserDetailsImpl details
+                        && jwtUtils.getIssuedAtEpochSecond(jwt) < details.getTokensValidFromEpochSecond()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 
